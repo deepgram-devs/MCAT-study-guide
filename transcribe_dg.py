@@ -1,33 +1,46 @@
 from deepgram import Deepgram
 import asyncio, json, os
 
-DEEPGRAM_API_KEY = os.environ.get('DG_KEY')
-PREFIX = "phone_call"
-FILENAME = "../audios/" + PREFIX + ".m4a"
-PARAMS = {'punctuate': True, 'diarize':True, 'tier': 'enhanced', 'model':'whisper'}
-
-async def main():
-
-    # Initialization
-    deepgram = Deepgram(DEEPGRAM_API_KEY)
-    print("Currently transcribing ", FILENAME)
-
-    # start transcribing
-    with open(FILENAME, 'rb') as audio:
-        source = {'buffer': audio, 'mimetype': 'audio/mp3'}
-        response = await deepgram.transcription.prerecorded(source, PARAMS)
-        print(response)
-        json_object = json.dumps(response, indent=4)
-
-    # write results
-    transcrption_file = './data_dg/' + PREFIX + '.json'
-    with open(transcrption_file, "w") as outfile:
-      outfile.write(json_object)
-    
-    print("Bag secured 💰😤💪")
-
-asyncio.run(main())
+'''
+ Sign up at https://console.deepgram.com/signup
+ to get an API key and 12,000 minutes
+ for free!
+'''
+dg_key = os.environ.get('DG_KEY')
+dg = Deepgram(dg_key)
 
 
+'''
+The most common audio formats and encodings we support 
+include mp3, mp4, mp2, aac, wav, flac, pcm, m4a, ogg, opus, and webm,
+So feel free to adjust the `MIMETYPE` variable as needed
+'''
+MIMETYPE = 'mp3'
+
+#Note: You can use '.' if your audio is in the root
+DIRECTORY = './audios'  
 
 
+# Feel free to modify your model's parameters as you wish!
+options = {
+    "punctuate": True,
+    "numerals":True,
+    "model": 'general',
+    "tier": 'nova'
+}
+
+# This function calls on the Deepgram model to transcribe
+# every file in the `DIRECTORY` folder that ends with the 
+# mimetype specified by `MIMETYPE`
+def main():
+    audio_folder = os.listdir(DIRECTORY)
+    for audio_file in audio_folder:
+        if audio_file.endswith(MIMETYPE):
+          with open(f"{DIRECTORY}/{audio_file}", "rb") as f:
+              source = {"buffer": f, "mimetype":'audio/'+MIMETYPE}
+              res = dg.transcription.sync_prerecorded(source, options)
+              with open(f"./{audio_file[:-4]}.json", "w") as transcript:
+                  json.dump(res, transcript, indent=4)
+    return
+
+main()
